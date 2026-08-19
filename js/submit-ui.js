@@ -9,7 +9,7 @@ import { conflitos, dentroDosLimites } from '../shared/geometry.js';
 import { obterEstado } from './camera.js';
 import * as store from './store.js';
 import { prepararImagem } from './image-prep.js';
-import { enviar } from './api.js';
+import { enviar, buscarPendentes } from './api.js';
 
 const painel = document.getElementById('painel-submissao');
 
@@ -26,7 +26,17 @@ let obraPendente = null; // { largura, altura, blob, objectUrl }
 let reticulo = null;
 let rafId = null;
 let enviando = false;
+let ativo = false; // guarda contra o widget do Turnstile renderizar depois de desativar()
 let refs = {};
+
+// Reservas pendentes (Bloco 6, item 50) — buscadas uma vez ao entrar em
+// #enviar, somadas a store.all() nas checagens de conflito ao vivo. O
+// Worker revalida contra as duas listas de novo no envio (é a fonte da
+// verdade); isto só evita que a pessoa gaste tempo posicionando em cima de
+// algo que já está em curadoria mas ainda não publicado.
+let pendentes = [];
+
+let turnstileWidgetId = null;
 
 function construirFormulario() {
   painel.innerHTML = `
@@ -66,6 +76,7 @@ function construirFormulario() {
         declaro que esta obra é minha ou que tenho autorização para publicá-la — ver
         <a href="diretrizes.html" target="_blank" rel="noopener">diretrizes</a>
       </label>
+      <div class="turnstile-container" id="turnstile-container"></div>
       <p class="submissao-status" id="status-submissao" role="status"></p>
       <button type="submit" class="botao-principal" id="botao-enviar">colar no território</button>
     </form>
@@ -83,6 +94,7 @@ function construirFormulario() {
     campoDescricao: painel.querySelector('#campo-descricao'),
     campoUrl: painel.querySelector('#campo-url'),
     campoAutoria: painel.querySelector('#campo-autoria'),
+    turnstileContainer: painel.querySelector('#turnstile-container'),
     status: painel.querySelector('#status-submissao'),
     botaoEnviar: painel.querySelector('#botao-enviar'),
   };
@@ -96,6 +108,21 @@ function construirFormulario() {
   refs.campoArquivo.addEventListener('change', aoEscolherArquivo);
   refs.botaoTrocar.addEventListener('click', trocarImagem);
   refs.form.addEventListener('submit', aoSubmeter);
+}
+
+// Cloudflare Turnstile carrega via <script async defer> em index.html —
+// pode ainda não ter definido window.turnstile no instante em que o
+// formulário monta. Tenta de novo em vez de assumir pronto; `ativo` evita
+// renderizar um widget órfão se desativar() já rodou nesse meio-tempo.
+function renderizarTurnstile() {
+  if (!ativo || !refs.turnstileContainer) return;
+  if (!window.turnstile) {
+    setTimeout(renderizarTurnstile, 100);
+    return;
+  }
+  turnstileWidgetId = window.turnstile.render(refs.turnstileContainer, {
+    sitekey: CONFIG.turnstile.siteKey,
+  });
 }
 
 function definirStatus(mensagem, tipo) {
@@ -171,7 +198,7 @@ function obraPendenteComoRetangulo() {
 
 function atualizarConflito() {
   const retangulo = obraPendenteComoRetangulo();
-  const conflitantes = conflitos(retangulo, store.all());
+  const conflitantes = conflitos(retangulo, [...store.all(), ...pendentes]);
   const dentro = dentroDosLimites(retangulo);
   const bloqueado = conflitantes.length > 0 || !dentro;
 
@@ -239,8 +266,16 @@ async function aoSubmeter(e) {
     return;
   }
 
-  if (conflitos(retangulo, store.all()).length > 0 || !dentroDosLimites(retangulo)) {
+  if (conflitos(retangulo, [...store.all(), ...pendentes]).length > 0 || !dentroDosLimites(retangulo)) {
     definirStatus('ajuste a posição antes de enviar.', 'erro');
+    return;
+  }
+
+  const turnstileToken = window.turnstile && turnstileWidgetId !== null
+    ? window.turnstile.getResponse(turnstileWidgetId)
+    : '';
+  if (!turnstileToken) {
+    definirStatus('confirme que você não é um robô antes de enviar.', 'erro');
     return;
   }
 
@@ -249,31 +284,44 @@ async function aoSubmeter(e) {
   definirStatus('enviando…');
 
   try {
-    await enviar({ ...rascunho, imagem: obraPendente.blob });
+    await enviar({ ...rascunho, imagem: obraPendente.blob, turnstileToken });
     definirStatus('obra enviada — vai passar por curadoria antes de aparecer no território.', 'ok');
     setTimeout(() => { location.hash = '#/'; }, 1500);
   } catch (erro) {
     console.error('falha ao enviar', erro);
     if (erro.codigo === 'conflito_de_espaco') {
       definirStatus('alguém colou uma obra aí entre você abrir o formulário e enviar — mova e tente de novo.', 'erro');
+    } else if (erro.codigo === 'antibot_falhou') {
+      definirStatus('a verificação antibot expirou — tente de novo.', 'erro');
     } else {
       definirStatus('não deu pra enviar agora — tenta de novo em instantes.', 'erro');
     }
   } finally {
     enviando = false;
     refs.botaoEnviar.disabled = false;
+    if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
   }
 }
 
 export function ativar() {
+  ativo = true;
   construirFormulario();
+  renderizarTurnstile();
   rafId = requestAnimationFrame(quadro);
+
+  buscarPendentes()
+    .then((lista) => { pendentes = lista; })
+    .catch((erro) => console.error('falha ao buscar reservas pendentes', erro));
 }
 
 export function desativar() {
+  ativo = false;
   if (rafId) cancelAnimationFrame(rafId);
   rafId = null;
   enviando = false;
+  pendentes = [];
+  if (window.turnstile && turnstileWidgetId !== null) window.turnstile.remove(turnstileWidgetId);
+  turnstileWidgetId = null;
   limparObraPendente();
   painel.innerHTML = '';
   refs = {};

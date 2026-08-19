@@ -114,6 +114,10 @@
   text-decoration: underline;
 }
 
+.turnstile-container {
+  margin-top: var(--espaco-1);
+}
+
 .submissao-status {
   font-size: 0.85rem;
   min-height: 1.2em;

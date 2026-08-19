@@ -1,16 +1,18 @@
 // Roteador: GET /pending, POST /submit. Fluxo de POST /submit reconstruído
 // a partir do que B.4 e o restante do Anexo B já fixam (não temos o texto
-// literal do fluxo de 10 passos citado em A.6):
+// literal do fluxo de 10 passos citado em A.6), com o antibot do Bloco 6
+// (item 49) inserido como um novo passo:
 //   1. checar Origin
 //   2. checar quota diária por IP
 //   3. checar reservas pendentes em excesso por IP
 //   4. ler o payload (multipart/form-data)
-//   5. validar a imagem (shared/png.js)
-//   6. gerar id único e validar o rascunho do sticker (shared/schema.js)
-//   7. checar limites do território (shared/geometry.js)
-//   8. checar conflito de geometria contra publicadas ∪ pendentes
-//   9. criar a reserva no KV e abrir o Pull Request no GitHub
-//   10. registrar a submissão na quota diária e responder 201
+//   5. verificar o token antibot (Cloudflare Turnstile)
+//   6. validar a imagem (shared/png.js)
+//   7. gerar id único e validar o rascunho do sticker (shared/schema.js)
+//   8. checar limites do território (shared/geometry.js)
+//   9. checar conflito de geometria contra publicadas ∪ pendentes
+//   10. criar a reserva no KV e abrir o Pull Request no GitHub
+//   11. registrar a submissão na quota diária e responder 201
 
 import { validarSticker } from '../../shared/schema.js';
 import { validarPng } from '../../shared/png.js';
@@ -20,6 +22,7 @@ import { ocupacaoAtual } from './occupancy.js';
 import { criarReserva, listarReservas } from './reservations.js';
 import { hashIp, limiteDiarioExcedido, registrarSubmissao, pendentesExcedidos } from './ratelimit.js';
 import { abrirSubmissaoComoPr } from './github.js';
+import { verificarTurnstile } from './turnstile.js';
 
 function gerarId() {
   const bytes = crypto.getRandomValues(new Uint8Array(4));
@@ -63,19 +66,25 @@ async function tratarSubmit(request, env) {
     return respostaErro(ERROS.PAYLOAD_INVALIDO, origem, env.ORIGEM_PAGES);
   }
 
+  // 5. antibot ---------------------------------------------------------------
+  const turnstileOk = await verificarTurnstile(dados.get('turnstileToken'), env, ip);
+  if (!turnstileOk) {
+    return respostaErro(ERROS.ANTIBOT_FALHOU, origem, env.ORIGEM_PAGES);
+  }
+
   const arquivo = dados.get('imagem');
   if (!(arquivo instanceof File)) {
     return respostaErro(ERROS.IMAGEM_INVALIDA, origem, env.ORIGEM_PAGES);
   }
 
-  // 5. imagem ------------------------------------------------------------
+  // 6. imagem ------------------------------------------------------------
   const pngBytes = new Uint8Array(await arquivo.arrayBuffer());
   const errosPng = validarPng(pngBytes);
   if (errosPng.length > 0) {
     return respostaErro(ERROS.IMAGEM_INVALIDA, origem, env.ORIGEM_PAGES, { detalhes: errosPng });
   }
 
-  // 6. id + schema ---------------------------------------------------------
+  // 7. id + schema ---------------------------------------------------------
   const ocupacao = await ocupacaoAtual(env, env.STICKER_WALL_KV);
   const id = gerarIdUnico(ocupacao);
 
@@ -111,7 +120,7 @@ async function tratarSubmit(request, env) {
     return respostaErro(ERROS.PAYLOAD_INVALIDO, origem, env.ORIGEM_PAGES, { detalhes: errosSchema });
   }
 
-  // 7, 8. geometria ----------------------------------------------------------
+  // 8, 9. geometria ----------------------------------------------------------
   if (!dentroDosLimites(rascunho)) {
     return respostaErro(ERROS.FORA_DOS_LIMITES, origem, env.ORIGEM_PAGES);
   }
@@ -123,7 +132,7 @@ async function tratarSubmit(request, env) {
     });
   }
 
-  // 9. reserva + PR ------------------------------------------------------
+  // 10. reserva + PR ------------------------------------------------------
   await criarReserva(env.STICKER_WALL_KV, {
     id, x: rascunho.x, y: rascunho.y, width: rascunho.width, height: rascunho.height, ipHash: hash,
   });
@@ -138,7 +147,7 @@ async function tratarSubmit(request, env) {
     return respostaErro(ERROS.ERRO_INTERNO, origem, env.ORIGEM_PAGES);
   }
 
-  // 10. quota + resposta -----------------------------------------------------
+  // 11. quota + resposta -----------------------------------------------------
   await registrarSubmissao(env.STICKER_WALL_KV, hash);
 
   return respostaJson({ id, pr: pr.url }, 201, origem, env.ORIGEM_PAGES);

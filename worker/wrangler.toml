@@ -13,5 +13,5 @@ binding = "STICKER_WALL_KV"
 id = "a23a3005bca14f00bae27012f5b41a60"
 
 # Secrets — nunca aqui, só via `wrangler secret put <NOME>`:
-#   GITHUB_TOKEN          PAT de escopo fino (Contents:write, Pull requests:write), restrito a este repo
-#   TURNSTILE_SECRET_KEY  chave secreta do Cloudflare Turnstile (entra no item 49, Bloco 6)
+#   GITHUB_TOKEN          PAT de escopo fino (Contents:write, Pull requests:write), restrito a este repo — já configurado
+#   TURNSTILE_SECRET_KEY  chave secreta do widget Turnstile (worker/src/turnstile.js) — falta criar o widget e configurar

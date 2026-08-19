@@ -17,6 +17,7 @@ export async function enviar(payload) {
   if (payload.descricao) corpo.set('descricao', payload.descricao);
   if (payload.url) corpo.set('url', payload.url);
   corpo.set('autoriaDeclarada', String(payload.autoriaDeclarada));
+  corpo.set('turnstileToken', payload.turnstileToken);
   corpo.set('imagem', payload.imagem, 'obra.png');
 
   const resposta = await fetch(`${CONFIG.worker.baseUrl}/submit`, { method: 'POST', body: corpo });
@@ -30,4 +31,15 @@ export async function enviar(payload) {
   }
 
   return dados;
+}
+
+// Reservas pendentes (obras com PR aberto mas ainda não mescladas) — usado
+// pelo aviso de conflito ao vivo em submit-ui.js, além de store.all(), pra
+// não deixar alguém tentar colar em cima de uma submissão que já está em
+// curadoria mas ainda não apareceu em stickers.json (item 50, Bloco 6).
+export async function buscarPendentes() {
+  const resposta = await fetch(`${CONFIG.worker.baseUrl}/pending`);
+  if (!resposta.ok) throw new Error(`falha ao buscar pendentes: ${resposta.status}`);
+  const dados = await resposta.json();
+  return dados.pending;
 }

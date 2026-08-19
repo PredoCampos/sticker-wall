@@ -48,4 +48,12 @@ export const CONFIG = Object.freeze({
   worker: Object.freeze({
     baseUrl: 'https://sticker-wall-worker.phenriquebcampos.workers.dev',
   }),
+
+  turnstile: Object.freeze({
+    // PLACEHOLDER — troque pela site key real depois de criar o widget em
+    // dash.cloudflare.com → Turnstile. Site key é pública (vai no HTML);
+    // a secret key correspondente é um secret do Worker
+    // (`wrangler secret put TURNSTILE_SECRET_KEY`), nunca aqui.
+    siteKey: 'SUBSTITUA_PELA_SITE_KEY',
+  }),
 });
