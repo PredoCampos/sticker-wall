@@ -6,6 +6,7 @@
     "test": "node --test",
     "seed": "node scripts/seed.mjs",
     "build": "node scripts/build-index.mjs",
+    "normalize": "node scripts/normalize.mjs",
     "dev": "npx --yes serve _site -l 8000"
   },
   "devDependencies": {

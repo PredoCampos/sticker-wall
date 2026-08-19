@@ -1,0 +1,61 @@
+name: Normalize
+
+# Roda em todo PR contra main, mas só faz algo se o PR alterar
+# data/stickers/*.json — é o que o Worker sempre commita junto com o PNG ao
+# abrir uma submissão (ver worker/src/github.js). Não usa `on.pull_request.paths`
+# de propósito: este check é exigido por branch protection (B.5, item 48), e
+# um required check que nunca dispara deixa o PR travado pra sempre — melhor
+# sempre rodar e sair cedo quando não há obra pra normalizar.
+#
+# Depois de normalizar, comita o resultado direto na branch do PR. Isso
+# dispara este mesmo workflow de novo (push na branch = novo evento
+# pull_request/synchronize), mas a segunda rodada não encontra nada pra
+# mudar (normalize.mjs é idempotente) e termina sem commit — não entra em loop.
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: normalize-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Detectar obras alteradas neste PR
+        id: obras
+        run: |
+          IDS=$(git diff --name-only --diff-filter=ACMR "${{ github.event.pull_request.base.sha }}" HEAD -- 'data/stickers/*.json' | xargs -r -n1 basename -s .json | tr '\n' ' ')
+          echo "ids=$IDS" >> "$GITHUB_OUTPUT"
+
+      - name: Normalizar
+        if: steps.obras.outputs.ids != ''
+        run: node scripts/normalize.mjs ${{ steps.obras.outputs.ids }}
+
+      - name: Commitar normalização, se algo mudou
+        if: steps.obras.outputs.ids != ''
+        run: |
+          if ! git diff --quiet -- data/stickers stickers; then
+            git config user.name "sticker-wall-bot"
+            git config user.email "actions@github.com"
+            git add data/stickers stickers
+            git commit -m "normalize: recodifica imagem e corrige metadados"
+            git push origin "HEAD:${{ github.event.pull_request.head.ref }}"
+          fi
