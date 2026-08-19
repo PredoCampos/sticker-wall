@@ -46,9 +46,6 @@ export const CONFIG = Object.freeze({
   }),
 
   worker: Object.freeze({
-    // PLACEHOLDER — troque pela URL real depois de `wrangler deploy`
-    // (algo como https://sticker-wall-worker.<subdominio>.workers.dev,
-    // ou um domínio próprio se você configurar uma rota).
-    baseUrl: 'https://SUBSTITUA.workers.dev',
+    baseUrl: 'https://sticker-wall-worker.phenriquebcampos.workers.dev',
   }),
 });
