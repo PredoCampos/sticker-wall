@@ -1,0 +1,39 @@
+# gerados por build/seed, nunca commitados
+_site/
+.wrangler/
+
+# obras geradas por `npm run seed` — fixtures de teste, não conteúdo real
+# (obras de verdade entram uma a uma via PR de curadoria)
+data/stickers/*
+!data/stickers/.gitkeep
+stickers/*
+!stickers/.gitkeep
+
+# segredos locais do wrangler — nunca commitados, só `wrangler secret put`
+worker/.dev.vars*
+.env*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

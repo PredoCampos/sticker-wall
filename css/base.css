@@ -1,0 +1,108 @@
+:root {
+  --cor-fundo: #16171a;
+  --cor-superficie: #1f2023;
+  --cor-superficie-alta: #29292e;
+  --cor-borda: #35363b;
+  --cor-texto: #f3f2ec;
+  --cor-texto-fraco: #9a9a9e;
+  --cor-acento: #ffcc00;
+  --cor-acento-texto: #16171a;
+  --cor-perigo: #ff4d4f;
+  --cor-sucesso: #35d07f;
+
+  --fonte-base: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fonte-mono: ui-monospace, "SFMono-Regular", Consolas, monospace;
+
+  --espaco-1: 4px;
+  --espaco-2: 8px;
+  --espaco-3: 16px;
+  --espaco-4: 24px;
+  --espaco-5: 32px;
+  --espaco-6: 48px;
+
+  --raio-sm: 6px;
+  --raio-md: 12px;
+  --sombra-painel: 0 8px 24px rgba(0, 0, 0, 0.45);
+
+  --z-hud: 10;
+  --z-painel: 20;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+/* Colunas de texto simples (sobre.html, diretrizes.html) — index.html usa
+   canvas.css, que trava o scroll da página porque o canvas é que rola. */
+.pagina {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--espaco-6) var(--espaco-4);
+}
+
+.pagina h1 {
+  font-size: 1.6rem;
+  margin-bottom: var(--espaco-4);
+}
+
+.pagina h2 {
+  font-size: 1.15rem;
+  margin-top: var(--espaco-5);
+  margin-bottom: var(--espaco-2);
+}
+
+.pagina p, .pagina li {
+  color: var(--cor-texto-fraco);
+  margin-bottom: var(--espaco-3);
+}
+
+.pagina a {
+  color: var(--cor-acento);
+  text-decoration: underline;
+}
+
+.pagina .voltar {
+  display: inline-block;
+  margin-bottom: var(--espaco-5);
+  color: var(--cor-texto-fraco);
+}
+
+body {
+  font-family: var(--fonte-base);
+  font-size: 16px;
+  line-height: 1.5;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, p, figure {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button, input, textarea, select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}

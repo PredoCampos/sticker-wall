@@ -1,0 +1,14 @@
+{
+  "name": "sticker-wall",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "seed": "node scripts/seed.mjs",
+    "build": "node scripts/build-index.mjs",
+    "dev": "npx --yes serve _site -l 8000"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.0"
+  }
+}

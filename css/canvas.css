@@ -1,0 +1,158 @@
+/* Só index.html carrega canvas.css — trava o scroll da página porque quem
+   rola é o canvas (pan), não o documento. */
+html, body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* Território: canvas em tela cheia, por baixo de tudo. input.js alterna a
+   classe .arrastando no body enquanto o usuário faz pan. */
+#territorio {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+
+body.arrastando #territorio {
+  cursor: grabbing;
+}
+
+/* Cabeçalho: flutua sobre o território, mas deixa o fundo clicável fora
+   da própria barra. */
+#cabecalho {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: var(--z-hud);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-3);
+  padding: var(--espaco-3) var(--espaco-4);
+  background: linear-gradient(to bottom, rgba(22, 23, 26, 0.85), transparent);
+  pointer-events: none;
+}
+
+#cabecalho a {
+  pointer-events: auto;
+}
+
+#marca {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--cor-acento);
+}
+
+#nav-principal {
+  display: flex;
+  gap: var(--espaco-4);
+  font-size: 0.9rem;
+  color: var(--cor-texto-fraco);
+}
+
+#nav-principal a:hover,
+#nav-principal a:focus-visible {
+  color: var(--cor-texto);
+}
+
+/* HUD: camada de painéis flutuantes. O contêiner não intercepta cliques —
+   só os painéis dentro dele, para o território continuar arrastável. */
+#hud {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-hud);
+  pointer-events: none;
+}
+
+.painel {
+  pointer-events: auto;
+  position: fixed;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-md);
+  box-shadow: var(--sombra-painel);
+}
+
+.painel[hidden] {
+  display: none;
+}
+
+#painel-obra {
+  left: var(--espaco-4);
+  right: var(--espaco-4);
+  bottom: var(--espaco-4);
+  padding: var(--espaco-4);
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+#painel-obra h2 {
+  padding-right: var(--espaco-5);
+  font-size: 1.1rem;
+}
+
+#painel-obra .hud-meta {
+  margin-top: var(--espaco-1);
+  color: var(--cor-texto-fraco);
+  font-size: 0.85rem;
+}
+
+#painel-obra .hud-descricao {
+  margin-top: var(--espaco-3);
+}
+
+#painel-obra .hud-link {
+  display: inline-block;
+  margin-top: var(--espaco-3);
+  color: var(--cor-acento);
+}
+
+#painel-obra [data-fechar] {
+  position: absolute;
+  top: var(--espaco-2);
+  right: var(--espaco-2);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--raio-sm);
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--cor-texto-fraco);
+}
+
+#painel-obra [data-fechar]:hover,
+#painel-obra [data-fechar]:focus-visible {
+  background: var(--cor-superficie-alta);
+  color: var(--cor-texto);
+}
+
+#indicador-zoom {
+  position: fixed;
+  right: var(--espaco-4);
+  bottom: var(--espaco-4);
+  z-index: var(--z-hud);
+  padding: var(--espaco-1) var(--espaco-2);
+  border-radius: var(--raio-sm);
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  font-family: var(--fonte-mono);
+  font-size: 0.8rem;
+  color: var(--cor-texto-fraco);
+  pointer-events: none;
+}
+
+@media (min-width: 720px) {
+  #painel-obra {
+    left: auto;
+    top: calc(var(--espaco-6) + var(--espaco-3));
+    right: var(--espaco-4);
+    bottom: auto;
+    width: 320px;
+    max-height: calc(100vh - var(--espaco-6) - var(--espaco-6));
+  }
+}

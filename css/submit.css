@@ -1,0 +1,165 @@
+/* Painel de submissão: mesma base .painel de canvas.css, com seu próprio
+   posicionamento responsivo (ainda não definido lá). */
+#painel-submissao {
+  left: var(--espaco-4);
+  right: var(--espaco-4);
+  bottom: var(--espaco-4);
+  padding: var(--espaco-4);
+  max-height: 70vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-3);
+}
+
+@media (min-width: 720px) {
+  #painel-submissao {
+    left: auto;
+    top: calc(var(--espaco-6) + var(--espaco-3));
+    right: var(--espaco-4);
+    bottom: auto;
+    width: 360px;
+    max-height: calc(100vh - var(--espaco-6) - var(--espaco-6));
+  }
+}
+
+.visualmente-oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-1);
+  font-size: 0.9rem;
+}
+
+.campo label {
+  color: var(--cor-texto-fraco);
+}
+
+.campo input[type="text"],
+.campo input[type="url"],
+.campo textarea {
+  background: var(--cor-superficie-alta);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-sm);
+  padding: var(--espaco-2);
+  color: var(--cor-texto);
+}
+
+.campo textarea {
+  resize: vertical;
+  min-height: 4.5em;
+}
+
+.botao-arquivo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--espaco-3);
+  border: 1px dashed var(--cor-borda);
+  border-radius: var(--raio-sm);
+  color: var(--cor-texto-fraco);
+  cursor: pointer;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+.botao-arquivo:hover,
+.botao-arquivo:focus-within {
+  border-color: var(--cor-acento);
+  color: var(--cor-texto);
+}
+
+.preview-arquivo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-2);
+  font-size: 0.85rem;
+  color: var(--cor-texto-fraco);
+}
+
+.preview-arquivo button {
+  color: var(--cor-acento);
+  text-decoration: underline;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.campo-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-2);
+  font-size: 0.8rem;
+  color: var(--cor-texto-fraco);
+  line-height: 1.4;
+}
+
+.campo-checkbox input {
+  margin-top: 0.2em;
+}
+
+.campo-checkbox a {
+  color: var(--cor-acento);
+  text-decoration: underline;
+}
+
+.submissao-status {
+  font-size: 0.85rem;
+  min-height: 1.2em;
+  color: var(--cor-texto-fraco);
+}
+
+.submissao-status.erro {
+  color: var(--cor-perigo);
+}
+
+.submissao-status.ok {
+  color: var(--cor-sucesso);
+}
+
+.botao-principal {
+  padding: var(--espaco-2) var(--espaco-3);
+  background: var(--cor-acento);
+  color: var(--cor-acento-texto);
+  border-radius: var(--raio-sm);
+  font-weight: 600;
+}
+
+.botao-principal:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Retículo: a obra pendente fica fixa no centro da tela; quem se move é o
+   território por baixo (pan/zoom normais de camera.js + input.js). */
+.reticulo-obra {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: var(--z-hud);
+  pointer-events: none;
+  box-shadow: 0 0 0 2px var(--cor-acento);
+  border-radius: 2px;
+}
+
+.reticulo-obra img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.reticulo-obra.conflito {
+  box-shadow: 0 0 0 2px var(--cor-perigo);
+}

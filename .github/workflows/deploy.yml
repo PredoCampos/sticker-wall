@@ -1,0 +1,52 @@
+name: Deploy
+
+# Publica este repo como GitHub Pages "project site", servido em
+# https://predocampos.github.io/sticker-wall/ (o prefixo /sticker-wall/
+# vem do nome do repo — nada aqui precisa saber disso).
+# scripts/build-index.mjs e os testes não têm dependências de terceiros
+# (só node:fs, node:path, node:zlib e shared/*.js), então não precisa de
+# npm install.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Testar shared/
+        run: node --test
+
+      - name: Montar _site
+        run: node scripts/build-index.mjs
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

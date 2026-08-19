@@ -1,0 +1,17 @@
+name = "sticker-wall-worker"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+[vars]
+GITHUB_OWNER = "PredoCampos"
+GITHUB_REPO = "sticker-wall"
+GITHUB_BRANCH_BASE = "main"
+ORIGEM_PAGES = "https://predocampos.github.io"
+
+[[kv_namespaces]]
+binding = "STICKER_WALL_KV"
+id = "SUBSTITUA_PELO_ID_REAL" # `wrangler kv:namespace create STICKER_WALL_KV`
+
+# Secrets — nunca aqui, só via `wrangler secret put <NOME>`:
+#   GITHUB_TOKEN          PAT de escopo fino (Contents:write, Pull requests:write), restrito a este repo
+#   TURNSTILE_SECRET_KEY  chave secreta do Cloudflare Turnstile (entra no item 49, Bloco 6)
